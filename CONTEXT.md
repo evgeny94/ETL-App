@@ -17,19 +17,21 @@ The application is built with **Streamlit** for the user interface and uses **Go
 
 ```
 ETL-App-main/
-├── app.py                 # Main Streamlit application entry point
-├── requirements.txt        # Python dependencies
-├── config.json            # Configuration (auto-generated if missing)
-├── run_app.command        # macOS launcher script
-├── run_app.bat            # Windows launcher script
-├── setup_env.command       # macOS setup script
-├── setup_env.bat          # Windows setup script
+├── app.py                   # Main Streamlit application entry point
+├── requirements.txt          # Python dependencies
+├── config.json              # Configuration (auto-generated if missing)
+├── run_app.command          # macOS launcher script
+├── run_app.bat              # Windows launcher script
+├── setup_env.command         # macOS setup script
+├── setup_env.bat            # Windows setup script
+├── update_version.command    # macOS git update script
+├── update_version.bat        # Windows git update script
 ├── src/
-│   ├── config.py          # Configuration loader and constants
-│   ├── sheets.py          # Google Sheets API operations
-│   ├── etl.py             # ETL pipeline logic
-│   └── utils.py           # Date parsing and column normalization utilities
-└── tests/                 # Test files (debug_utils, test_fix, etc.)
+│   ├── config.py            # Configuration loader and constants
+│   ├── sheets.py            # Google Sheets API operations
+│   ├── etl.py               # ETL pipeline logic
+│   └── utils.py             # Date parsing and column normalization utilities
+└── tests/                   # Test files (debug_utils, test_fix, etc.)
 ```
 
 ### Data Flow
@@ -69,7 +71,9 @@ flowchart TD
 
 #### 3. **src/sheets.py** - Google Sheets Operations
 - `connect()`: Authenticates using service account credentials
-- `write_latest_week()`: Writes DataFrame to target sheet with auto-incrementing tab names
+- `write_latest_week()`: Writes DataFrame to TWO target sheet tabs:
+  - "Run N - [DD/MM/YYYY HH:MM:SS]" with auto-incrementing run number
+  - "Run 0 - Latest" positioned at leftmost (index 0) with latest data
 - `get_all_tabs()`: Lists all tabs in target sheet
 - `delete_tabs()`: Deletes specified tabs from target sheet
 - `write_df_to_sheet()`: Low-level DataFrame writing with date formatting
@@ -81,7 +85,7 @@ flowchart TD
 - `coerce_numeric_columns()`: Converts text columns to numeric where appropriate
 
 #### 5. **src/utils.py** - Utilities
-- `parse_tab_date()`: Parses tab names (DDMM, DD/MM/YYYY formats)
+- `parse_tab_date()`: Parses tab names (DDMM, DD/MM/YYYY, DD/MM/YY formats)
 - `parse_col_date()`: Parses column headers for dates
 - `is_date_header()`: Detects if column header is a date
 - `normalize_columns()`: Converts column names to snake_case
@@ -178,12 +182,16 @@ flowchart TD
 ### Tab Naming Conventions
 
 **Source Sheets**:
-- Date-based: `2212` (DDMM), `12/12/2024`, `12-12-2024`
+- Date-based: `2212` (DDMM), `12/12/2024`, `12-12-2024`, `31/12/26` (DD/MM/YY)
 - Used to determine which tabs to process for a date range
+- Supports both 4-digit and 2-digit years
 
 **Target Sheets**:
-- Run-based: `Run 1 - [DD/MM/YYYY HH:MM:SS]`
+- The ETL writes to TWO tabs on each run:
+  1. **Run N - [DD/MM/YYYY HH:MM:SS]** (timestamped run with auto-incrementing N)
+  2. **Run 0 - Latest** (always contains the most recent run data, positioned leftmost)
 - Auto-increments: Finds highest "Run N" and creates "Run N+1"
+- "Run 0 - Latest" is cleared and updated on each run
 - Old format also supported: `run N [YYYY-MM-DD_HH-MM-SS]`
 
 ### Column Normalization
@@ -219,7 +227,9 @@ flowchart TD
    - Coerce numeric columns
    - Remove summary rows
    - Filter to date range
-6. **Write**: Create new tab in target sheet with timestamp
+6. **Write**: Create TWO tabs in target sheet:
+   - "Run N - [timestamp]" with auto-incremented N
+   - "Run 0 - Latest" at leftmost position (cleared before writing)
 
 ### Date Range Logic
 
@@ -293,8 +303,8 @@ Test files in `tests/` directory:
 ### Key Design Decisions
 
 1. **Tab Date Priority**: Tab name overrides column dates (user requirement)
-2. **Auto Tab Naming**: Increments "Run N" automatically
-3. **Flexible Date Parsing**: Supports multiple date formats for robustness
+2. **Dual Tab Writing**: Writes to both timestamped "Run N" and "Run 0 - Latest" tabs
+3. **Flexible Date Parsing**: Supports multiple date formats including 2-digit years
 4. **Numeric Coercion**: Smart detection (>30% numeric) before conversion
 5. **Summary Row Filtering**: Removes common summary patterns
 
@@ -311,6 +321,8 @@ Test files in `tests/` directory:
 - `run_app.bat`: Windows launcher (runs Streamlit)
 - `setup_env.command`: macOS setup script (creates venv, installs deps, creates config.json and gcp-service-account folder)
 - `setup_env.bat`: Windows setup (creates venv, installs deps, creates config.json and gcp-service-account folder)
+- `update_version.command`: macOS git update script (fetches and rebases from upstream)
+- `update_version.bat`: Windows git update script (fetches and rebases from upstream)
 
 ### Source Code
 - `app.py`: Streamlit application with two pages

@@ -47,24 +47,50 @@ After running the setup script, you need to configure:
     - `end_date`: Default end date in `YYYY-MM-DD` format (e.g., `"2024-12-31"`)
     - If not provided, the app will automatically detect the latest tab date and look back 7 days
 
+## 🔄 Updating to Latest Version
+
+To update your local installation to the latest version from the upstream repository:
+
+### Windows
+Double-click `update_version.bat`
+
+### macOS
+Double-click `update_version.command`
+> **Note**: You may need to make it executable first: `chmod +x update_version.command`
+
+The script will:
+1. Fetch latest changes from upstream
+2. Checkout main branch
+3. Rebase with upstream/main
+
+> **Prerequisites**: You must have added the upstream remote first:
+> ```bash
+> git remote add upstream [UPSTREAM_REPOSITORY_URL]
+> ```
+
+
 ## 🧩 Logic Notes
 
 ### Date Extraction
 
 The tool uses a **priority-based date extraction** system:
 
-1.  **Tab Name** (highest priority): If a tab is named with a date format (e.g., `2212` for Dec 22nd, `12/12/2024`, `12-12-2024`), *all* rows in that tab are assigned to that date.
+1.  **Tab Name** (highest priority): If a tab is named with a date format (e.g., `2212` for Dec 22nd, `12/12/2024`, `31/12/26`), *all* rows in that tab are assigned to that date.
     - This overrides any conflicting dates found in column headers
-    - Supported formats: `DDMM` (e.g., `2212`), `DD/MM/YYYY`, `DD-MM-YYYY`
+    - Supported formats: `DDMM` (e.g., `2212`), `DD/MM/YYYY`, `DD-MM-YYYY`, `DD/MM/YY`, `DD-MM-YY`
+    - Supports both 4-digit and 2-digit years
 
 2.  **Column Headers** (fallback): If the tab name doesn't contain a date, dates are parsed from column headers.
     - Supports formats: `12/12`, `12-12`, `December 12`, `Dec 12`, etc.
 
 ### Tab Naming Conventions
 
--   **Source Sheets**: Use date-based tab names (e.g., `2212`, `12/12/2024`) to identify which tabs to process for a date range
--   **Target Sheets**: Use run-based tab names (e.g., `Run 1 - [DD/MM/YYYY HH:MM:SS]`)
+-   **Source Sheets**: Use date-based tab names (e.g., `2212`, `12/12/2024`, `31/12/26`) to identify which tabs to process for a date range
+-   **Target Sheets**: The ETL writes to TWO tabs on each run:
+    - **Run N - [DD/MM/YYYY HH:MM:SS]**: Timestamped tab with auto-incrementing run number
+    - **Run 0 - Latest**: Always updated with the latest run data, positioned at the leftmost
     - The app automatically increments run numbers (finds highest "Run N" and creates "Run N+1")
+    - "Run 0 - Latest" is cleared and updated on each run
     - Old format also supported: `run N [YYYY-MM-DD_HH-MM-SS]`
 
 ### Column Normalization
