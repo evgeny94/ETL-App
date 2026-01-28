@@ -117,10 +117,16 @@ def write_latest_week(client, df, target_sheet_id=None, worksheet_name=None):
     print(f"Target Tab: {worksheet_name}")
 
     try:
-        # Pass index=0 to ensure it's created on the far left
-        write_df_to_sheet(sh, df, worksheet_name=worksheet_name, index=0)
-        print(f"✅ Written cleaned DataFrame to spreadsheet {target_sheet_id} worksheet '{worksheet_name}'")
-        return worksheet_name
+        # Write to the timestamped "Run N - [timestamp]" tab (no specific index)
+        write_df_to_sheet(sh, df, worksheet_name=worksheet_name)
+        print(f"✅ Written cleaned DataFrame to worksheet '{worksheet_name}'")
+        
+        # Write to "Run 0 - Latest" tab at index 0 (leftmost position)
+        latest_tab_name = "Run 0 - Latest"
+        write_df_to_sheet(sh, df, worksheet_name=latest_tab_name, index=0)
+        print(f"✅ Written cleaned DataFrame to worksheet '{latest_tab_name}' at leftmost position")
+        
+        return worksheet_name, latest_tab_name
     except Exception as e:
         print(f"❌ Failed to write to sheet: {e}")
         raise e

@@ -173,12 +173,16 @@ if st.session_state["page"] == "run_pipeline":
                     
                     # 3. Write
                     st.write("Writing to Target Sheet...")
-                    tab_name = sheets.write_latest_week(client, df, target_sheet_id=config.TARGET_SHEET_ID)
+                    tab_names = sheets.write_latest_week(client, df, target_sheet_id=config.TARGET_SHEET_ID)
                     
-                    status.update(label=f"✅ Done! Written to {tab_name}", state="complete", expanded=False)
+                    # tab_names is now a tuple: (timestamped_tab, latest_tab)
+                    timestamped_tab = tab_names[0]
+                    latest_tab = tab_names[1]
+                    
+                    status.update(label=f"✅ Done! Written to {timestamped_tab} and {latest_tab}", state="complete", expanded=False)
                     
                     st.balloons()
-                    st.success(f"✅ Successfully written to **{tab_name}**")
+                    st.success(f"✅ Successfully written to **{timestamped_tab}** and **{latest_tab}**")
     
                     # Preview
                     st.subheader("Preview Data")

@@ -13,9 +13,10 @@ def parse_tab_date(tab_name, year=None):
     from src.config import YEAR as DEFAULT_YEAR
     target_year = year if year else DEFAULT_YEAR
 
-    # 1. Try explicit full date formats (DD/MM/YYYY)
+    # 1. Try explicit full date formats (DD/MM/YYYY and DD/MM/YY)
     full_date_patterns = [
-        "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"
+        "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y",  # 4-digit year
+        "%d/%m/%y", "%d-%m/%y", "%d.%m/%y"   # 2-digit year
     ]
     for p in full_date_patterns:
         try:
